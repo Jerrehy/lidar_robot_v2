@@ -1,0 +1,14 @@
+camera:
+  ros__parameters:
+    # USB-камера
+    video_device: "/dev/video0"
+
+    # Разрешение
+    image_size: [640, 480]
+
+    # Формат пикселей.
+    # Если камера поддерживает MJPG, можно попробовать:
+    # pixel_format: "MJPG"
+    pixel_format: "YUYV"
+
+    camera_frame_id: "camera"

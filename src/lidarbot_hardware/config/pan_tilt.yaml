@@ -1,0 +1,24 @@
+pan_tilt_driver:
+  ros__parameters:
+    use_gpio: true
+
+    pan_gpio_pin: 5
+    tilt_gpio_pin: 6
+    gpio_chip: 0
+
+    pan_min_angle: 0.0
+    pan_max_angle: 180.0
+    tilt_min_angle: 0.0
+    tilt_max_angle: 180.0
+
+    pan_default_angle: 90.0
+    tilt_default_angle: 90.0
+
+    publish_rate_hz: 10.0
+
+    # Мертвая зона: игнорируем изменения меньше 1 градуса
+    dead_zone_deg: 1.0
+
+    # Максимальная частота обновления сервоприводов (Hz)
+    # Уменьшает дрожание, ограничивая частоту команд
+    command_rate_limit_hz: 5.0

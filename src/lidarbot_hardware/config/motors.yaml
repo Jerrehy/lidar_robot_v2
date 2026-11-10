@@ -1,0 +1,29 @@
+motor_driver:
+  ros__parameters:
+    # Главный предохранитель.
+    # Если false, команды /cmd_vel игнорируются.
+    motion_allowed: false
+
+    # Если false, узел только логирует расчетные команды,
+    # но не управляет реальным драйвером моторов.
+    hardware_enabled: false
+
+    # По умолчанию аварийная остановка включена.
+    estop_active_default: true
+
+    # Если нет /cmd_vel дольше этого времени, остановка.
+    watchdog_timeout_sec: 0.4
+
+    # Ограничения диагностического движения
+    max_linear_x: 0.2
+    max_angular_z: 0.5
+
+    publish_rate_hz: 10.0
+
+    odom_frame: "odom_raw"
+    base_frame: "base_link"
+
+    # Параметры модели колес.
+    # Нужны только для диагностического расчета.
+    wheel_separation_m: 0.20
+    wheel_radius_m: 0.033

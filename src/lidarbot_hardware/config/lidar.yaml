@@ -1,0 +1,17 @@
+sllidar_node:
+  ros__parameters:
+    # Обычно RPLIDAR A1 появляется как /dev/ttyUSB0.
+    # Если используете другое устройство или udev-правило, измените здесь.
+    serial_port: "/dev/ttyUSB0"
+
+    # Для RPLIDAR A1 обычно 115200
+    serial_baudrate: 115200
+
+    frame_id: "laser"
+
+    # Полезно для равномерного скана
+    angle_compensate: true
+
+    # Для A1 обычно не нужно инвертировать,
+    # но может зависеть от установки.
+    inverted: false

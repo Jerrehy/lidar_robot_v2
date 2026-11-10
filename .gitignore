@@ -1,0 +1,33 @@
+# ROS build artifacts
+build/
+install/
+log/
+
+# ROS bags (большие файлы данных)
+bags/
+*.db3
+*.mcap
+metadata.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

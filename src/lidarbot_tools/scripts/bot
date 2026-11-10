@@ -1,0 +1,218 @@
+#!/usr/bin/env bash
+#
+# Простой интерфейс управления стадией «Минимум».
+#
+# Использование:
+#   bot up-min
+#   bot status
+#   bot doctor
+#   bot topics
+#   bot hz scan|imu|cam
+#   bot camera view
+#   bot pan <pan> <tilt>
+#   bot estop on|off
+#   bot record sensors [bag_dir]
+
+set -o pipefail
+
+# Расположение реального скрипта, даже если он запущен через symlink
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_PATH}")" && pwd)"
+
+ROS_SETUP="/opt/ros/humble/setup.bash"
+WORKSPACE_SETUP="${HOME}/lidarbot_ws/install/setup.bash"
+
+if [ -f "${ROS_SETUP}" ]; then
+    # shellcheck disable=SC1090
+    source "${ROS_SETUP}"
+fi
+
+if [ -f "${WORKSPACE_SETUP}" ]; then
+    # shellcheck disable=SC1090
+    source "${WORKSPACE_SETUP}"
+fi
+
+usage() {
+    cat <<EOF
+Использование:
+
+  bot up-min
+      Запустить минимальный набор узлов.
+
+  bot status
+      Показать текущее состояние системы.
+
+  bot doctor
+      Выполнить базовую проверку системы.
+
+  bot topics
+      Показать список активных топиков.
+
+  bot hz scan
+      Проверить частоту /scan.
+
+  bot hz imu
+      Проверить частоту /imu/data.
+
+  bot hz cam
+      Проверить частоту /camera/image_raw/compressed.
+
+  bot camera view
+      Показать изображение камеры или подсказать команду просмотра.
+
+  #bot pan <pan> <tilt>
+  #    Отправить команду поворота камеры.
+  #    Пример:
+  #      bot pan 90 60
+
+  bot estop on
+      Включить аварийную остановку.
+
+  bot estop off
+      Выключить аварийную остановку.
+
+  bot record sensors [bag_dir]
+      Записать основные топики в ros2 bag.
+
+EOF
+}
+
+if [ $# -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+COMMAND="$1"
+shift || true
+
+case "${COMMAND}" in
+    up-min)
+        exec ros2 launch lidarbot_hardware minimum.launch.py "$@"
+        ;;
+
+    status)
+        python3 "${SCRIPT_DIR}/bot_status.py"
+        ;;
+
+    doctor)
+        python3 "${SCRIPT_DIR}/bot_doctor.py"
+        ;;
+
+    topics)
+        ros2 topic list -t
+        ;;
+
+    hz)
+        if [ $# -lt 1 ]; then
+            echo "Использование: bot hz scan|imu|cam"
+            exit 1
+        fi
+
+        case "$1" in
+            scan)
+                exec ros2 topic hz /scan
+                ;;
+            imu)
+                exec ros2 topic hz /imu/data
+                ;;
+            cam|camera)
+                exec ros2 topic hz /camera/image_raw/compressed
+                ;;
+            *)
+                echo "Неизвестная цель: $1"
+                echo "Использование: bot hz scan|imu|cam"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    camera)
+        if [ $# -lt 1 ]; then
+            echo "Использование: bot camera view"
+            exit 1
+        fi
+
+        if [ "$1" = "view" ]; then
+            echo "Попытка открыть rqt_image_view."
+            echo "Если GUI недоступен, запустите вручную на машине с графикой:"
+            echo "  ros2 run rqt_image_view rqt_image_view /camera/image_raw"
+            echo ""
+
+            if ros2 pkg prefix rqt_image_view >/dev/null 2>&1; then
+                ros2 run rqt_image_view rqt_image_view /camera/image_raw
+            else
+                echo "Пакет rqt_image_view не найден."
+                echo "Установите: sudo apt install ros-humble-rqt-image-view"
+                exit 1
+            fi
+        else
+            echo "Неизвестная команда camera: $1"
+            exit 1
+        fi
+        ;;
+
+    #pan)
+    #    if [ $# -lt 2 ]; then
+    #        echo "Использование: bot pan <pan> <tilt>"
+    #        exit 1
+    #    fi
+
+    #    PAN="$1"
+    #    TILT="$2"
+
+    #    echo "Отправка команды: pan=${PAN}, tilt=${TILT}"
+
+    #    ros2 topic pub --once /pan_tilt_cmd geometry_msgs/msg/Vector3 \
+    #        "{x: ${PAN}, y: ${TILT}, z: 0.0}"
+
+    #    sleep 0.3
+
+    #    echo "Текущее состояние /pan_tilt_state:"
+    #    timeout 2 ros2 topic echo /pan_tilt_state --once || {
+    #        echo "WARN: не удалось получить /pan_tilt_state за 2 секунды"
+    #        exit 1
+    #    }
+    #    ;;
+
+    estop)
+        if [ $# -lt 1 ]; then
+            echo "Использование: bot estop on|off"
+            exit 1
+        fi
+
+        case "$1" in
+            on)
+                ros2 service call /set_estop std_srvs/srv/SetBool "{data: true}"
+                ;;
+            off)
+                ros2 service call /set_estop std_srvs/srv/SetBool "{data: false}"
+                ;;
+            *)
+                echo "Использование: bot estop on|off"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    record)
+        if [ $# -lt 1 ] || [ "$1" != "sensors" ]; then
+            echo "Использование: bot record sensors [bag_dir]"
+            exit 1
+        fi
+
+        shift || true
+        bash "${SCRIPT_DIR}/bot_record.sh" "$@"
+        ;;
+
+    help|--help|-h)
+        usage
+        exit 0
+        ;;
+
+    *)
+        echo "Неизвестная команда: ${COMMAND}"
+        echo ""
+        usage
+        exit 1
+        ;;
+esac

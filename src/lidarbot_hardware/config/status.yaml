@@ -1,0 +1,16 @@
+system_status_node:
+  ros__parameters:
+    publish_rate_hz: 1.0
+
+    # Если сообщение не приходило дольше этого времени,
+    # соответствующий компонент считается ошибочным.
+    topic_timeout_sec: 2.0
+
+    scan_topic: "/scan"
+    imu_topic: "/imu/data"
+    camera_topic: "/camera/image_raw/compressed"
+    # pan_tilt_topic: "/pan_tilt_state"
+    odom_topic: "/odom_raw"
+    estop_topic: "/estop_state"
+
+    thermal_zone: "/sys/class/thermal/thermal_zone0/temp"
